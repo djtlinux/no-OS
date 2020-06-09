@@ -632,6 +632,34 @@ int32_t ad5770r_set_monitor_setup(struct ad5770r_dev *dev,
 };
 
 /**
+ * @brief Deallocate memory for the GPIOs assigned.
+ * @param dev - Device driver handler.
+ * @return SUCCESS in case of success, FAILURE otherwise.
+ */
+static int32_t ad5770r_remove_gpio(struct ad5770r_dev *dev)
+{
+	int32_t ret;
+
+	if(dev->nalarm) {
+		ret = gpio_remove(dev->nalarm);
+		if(ret != SUCCESS)
+			return FAILURE;
+	}
+	if(dev->nldac) {
+		ret = gpio_remove(dev->nldac);
+		if(ret != SUCCESS)
+			return FAILURE;
+	}
+	if(dev->nreset) {
+		ret = gpio_remove(dev->nreset);
+		if(ret != SUCCESS)
+			return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+/**
  * Initialize the device.
  * @param device - The device structure.
  * @param init_param - The structure that contains the device initial
@@ -655,6 +683,17 @@ int32_t ad5770r_init(struct ad5770r_dev **device,
 
 	/* SPI */
 	ret = spi_init(&dev->spi_desc, &init_param->spi_init);
+
+	/* GPIO */
+	ret = gpio_get_optional(&dev->nalarm, init_param->nalarm);
+	ret = gpio_get_optional(&dev->nldac, init_param->nldac);
+	ret = gpio_get_optional(&dev->nreset, init_param->nreset);
+	if(dev->nalarm)
+		ret = gpio_direction_input(dev->nalarm);
+	if(dev->nldac)
+		ret = gpio_direction_output(dev->nldac, GPIO_HIGH);
+	if(dev->nreset)
+		ret = gpio_direction_output(dev->nreset, GPIO_HIGH);
 
 	/* Query device presence */
 	ad5770r_spi_reg_read(dev, AD5770R_PRODUCT_ID_L, &product_id_l);
@@ -729,6 +768,10 @@ int32_t ad5770r_remove(struct ad5770r_dev *dev)
 		return FAILURE;
 
 	ret = spi_remove(dev->spi_desc);
+
+	ret = ad5770r_remove_gpio(dev);
+	if (IS_ERR_VALUE(ret))
+		return FAILURE;
 
 	free(dev);
 

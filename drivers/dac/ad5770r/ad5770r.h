@@ -46,6 +46,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "spi.h"
+#include "gpio.h"
 
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
@@ -297,7 +298,10 @@ struct ad5770r_alarm_cfg {
 struct ad5770r_dev {
 	/* SPI */
 	spi_desc				*spi_desc;
-
+	/* GPIO */
+	struct gpio_desc			*nalarm;
+	struct gpio_desc			*nreset;
+	struct gpio_desc			*nldac;
 	/* Device SPI Settings */
 	struct ad5770r_device_spi_settings	dev_spi_settings;
 	/* Device Settings */
@@ -319,7 +323,10 @@ struct ad5770r_dev {
 struct ad5770r_init_param {
 	/* SPI */
 	spi_init_param				spi_init;
-
+	/* GPIO */
+	struct gpio_init_param			*nalarm;
+	struct gpio_init_param			*nreset;
+	struct gpio_init_param			*nldac;
 	/* Device SPI Settings */
 	struct ad5770r_device_spi_settings	dev_spi_settings;
 	/* Device Settings */
